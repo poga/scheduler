@@ -70,6 +70,10 @@ var options = {
     cb(item)
     render()
   },
+  onRemove: (item, cb) => {
+    cb(item)
+    render()
+  },
   snap: (date, scale, step) => {
     // snap to start of a day
     return moment(date).startOf('day')
@@ -113,15 +117,20 @@ const tableView = () => {
 const tbody = (items) => {
   const styles = ['bg-white', 'bg-black-10']
   var currentStyle = 0
+  var styleRendered = false
   console.log(items)
 
   var views = []
   items.forEach((item, i) => {
     if (item.group === 1) {
-      currentStyle = (currentStyle + 1) % styles.length
+      if (styleRendered) {
+        currentStyle = (currentStyle + 1) % styles.length
+        styleRendered = false
+      }
       return
     }
 
+    styleRendered = true
     views.push(itemView(item, i, styles[currentStyle]))
   })
 
