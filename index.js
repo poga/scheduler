@@ -151,7 +151,7 @@ const itemView = (item, i, style) => {
   `
 
   function formatDate (date) {
-    return moment(date).format('YYYY.MM.DD')
+    return moment(date).format('MM.DD')
   }
 
   function updateHandler (item, attr) {
