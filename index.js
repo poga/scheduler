@@ -19,14 +19,17 @@ const stepStyle = 'background-color: grey; border: none; color: white'
 // Create a DataSet (allows two way data-binding)
 var items = new vis.DataSet([
   { id: 1, group: 2, content: 'item 1', start: today.clone(), end: today.clone().add(1, 'day'), owner: 'foo' },
-  { id: 2, group: 1, content: 'Step 1', start: today.clone().add(1, 'day'), style: stepStyle },
-  { id: 4, content: 'item 4', start: today.clone().add(2, 'day'), end: today.clone().add(4, 'day') }
+  { id: 2, group: 1, content: 'Step 1', start: today.clone().add(1, 'day'), style: stepStyle }
 ])
 window.items = items
 
 // Configuration for the Timeline
 var options = {
-  editable: true,
+  editable: {
+    add: true,
+    updateTime: true,
+    remove: true
+  },
   multiselect: true,
   timeAxis: { scale: 'day' },
   format: {
@@ -42,13 +45,15 @@ var options = {
   zoomKey: 'ctrlKey',
   start: today.clone().startOf('week'),
   onAdd: (item, cb) => {
-    if (currentMode === modes.indexOf('item')) {
-      item.end = moment(item.start).add(1, 'day')
-      item.group = 2
-    } else {
+    if (item.group === 1) {
+      item.content = '新階段'
       item.style = stepStyle
-      item.group = 1
+    } else {
+      item.end = moment(item.start).add(1, 'day')
+      item.content = '新工作項目'
     }
+
+    item.owner = undefined
     cb(item)
     render()
   },
@@ -77,9 +82,8 @@ timeline.setGroups(groups)
 
 const tableView = () => {
   return yo`
-    <div class="pa4" id="table">
-      ${createMode()}
-      <div class="overflow-auto">
+    <div class="mw8 center w-100 pl4 pr4" id="table">
+      <div class="mt5 overflow-auto">
         <table class="f6 w-100 mw8 center" cellspacing="0">
           <thead>
             <tr class="bg-black-40 white-90">
@@ -99,35 +103,10 @@ const tableView = () => {
     var ty = moment(y.start)
     // 如果兩個 item 時間一樣，把 step 放前面
     if (tx.isSame(ty)) {
-      return x.group !== 'step'
+      return x.group > y.group
     }
 
     return moment(x.start).isAfter(moment(y.start))
-  }
-}
-
-const modes = groups.map(g => g.content)
-var currentMode = 0
-const createMode = () => {
-  return yo`
-    <div class="mw8 center">
-      <a class="f6 link dim ph3 pv2 mb2 dib ${buttonStyle('step')}" href="#0" onclick=${setMode('step')}>階段標籤</a>
-      <a class="f6 link dim ph3 pv2 mb2 dib ${buttonStyle('item')}" href="#0" onclick=${setMode('item')}>工作項目</a>
-    </div>
-  `
-
-  function buttonStyle (mode) {
-    if (currentMode === modes.indexOf(mode)) return 'black ba'
-
-    return 'white-bg-black'
-  }
-
-  function setMode (mode) {
-    return (e) => {
-      currentMode = modes.indexOf(mode)
-      console.log(currentMode)
-      render()
-    }
   }
 }
 
@@ -138,7 +117,7 @@ const tbody = (items) => {
 
   var views = []
   items.forEach((item, i) => {
-    if (item.group === 'step') {
+    if (item.group === 1) {
       currentStyle = (currentStyle + 1) % styles.length
       return
     }
@@ -158,7 +137,7 @@ const itemView = (item, i, style) => {
     <tr class="${style}">
       <td class="pa2">${formatDate(item.start)} - ${formatDate(item.end)}</td>
       <td class="pa2"><input class="bn-l bg-transparent" type="text" value="${item.content}" onkeyup=${updateHandler(item, 'content')}/></td>
-      <td class="pa2"><input class="bn-l bg-transparent" type="text" value="${item.owner || ''}" onkeyup=${updateHandler(item, 'owner')}/></td>
+      <td class="pa2"><input class="bn-l bg-transparent" type="text" value="${item.owner || ' '}" onkeyup=${updateHandler(item, 'owner')}/></td>
     </tr>
   `
 
