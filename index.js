@@ -2,16 +2,20 @@
 const vis = require('vis')
 const moment = require('moment')
 const yo = require('yo-yo')
+const extend = require('xtend')
 
 // DOM element where the Timeline will be attached
 var container = document.getElementById('vis')
 
+const today = moment().startOf('day')
+
 // Create a DataSet (allows two way data-binding)
 var items = new vis.DataSet([
-  { id: 1, content: 'item 1', start: moment('2013-04-20'), end: moment('2013-04-21'), owner: 'foo' },
-  { id: 2, itemType: 'step', content: 'Step 1', start: moment('2013-04-20'), style: 'background-color: grey; border: none; color: white' },
-  { id: 4, content: 'item 4', start: moment('2013-04-16'), end: moment('2013-04-19') }
+  { id: 1, content: 'item 1', start: today.clone(), end: today.clone().add(1, 'day'), owner: 'foo' },
+  { id: 2, itemType: 'step', content: 'Step 1', start: today.clone().add(1, 'day'), style: 'background-color: grey; border: none; color: white' },
+  { id: 4, content: 'item 4', start: today.clone().add(2, 'day'), end: today.clone().add(4, 'day') }
 ])
+window.items = items
 
 // Configuration for the Timeline
 var options = {
@@ -20,14 +24,20 @@ var options = {
   timeAxis: { scale: 'day' },
   format: {
     majorLabels: {
-      day: 'YYYY-MM'
+      day: 'YYYY/MM'
     },
     minorLabels: {
-      day: 'MM/DD'
+      day: 'MM/DD ddd'
     }
   },
   minHeight: 200,
-  onAdd: (item, cb) => { item.end = moment(item.start).add(1, 'day'); cb(item) },
+  horizontalScroll: true,
+  zoomKey: 'ctrlKey',
+  start: today.clone().startOf('week'),
+  onAdd: (item, cb) => {
+    item.end = moment(item.start).add(1, 'day'); cb(item)
+    render()
+  },
   onUpdate: (item, cb) => {
     item.content = prompt('Edit items text:', item.content)
     if (item.content != null) {
@@ -35,25 +45,20 @@ var options = {
     } else {
       cb(null) // cancel updating the item
     }
-    updated()
+    render()
   },
   onMove: (item, cb) => {
     cb(item)
-    updated()
+    render()
   },
   snap: (date, scale, step) => {
     // snap to start of a day
-    return moment(date).hour(0).minute(0).second(0).millisecond(0)
+    return moment(date).startOf('day')
   }
 }
 
 // Create a Timeline
 var timeline = new vis.Timeline(container, items, options)
-
-function updated () {
-  console.log(items)
-  render()
-}
 
 const view = () => {
   return yo`
@@ -76,10 +81,8 @@ const view = () => {
   function sortItem (x, y) {
     var tx = moment(x.start)
     var ty = moment(y.start)
-    console.log(x.content, tx.format(), y.content, ty.format())
     // 如果兩個 item 時間一樣，把 step 放前面
     if (tx.isSame(ty)) {
-      console.log('same')
       return x.itemType !== 'step'
     }
 
@@ -113,14 +116,24 @@ const itemView = (item, i, style) => {
   return yo`
     <tr class="${style}">
       <td class="pa2">${formatDate(item.start)} - ${formatDate(item.end)}</td>
-      <td class="pa2">${item.content}</td>
-      <td class="pa2">${item.owner}</td>
+      <td class="pa2"><input class="bn-l bg-transparent" type="text" value="${item.content}" onkeyup=${updateHandler(item, 'content')}/></td>
+      <td class="pa2"><input class="bn-l bg-transparent" type="text" value="${item.owner || ''}" onkeyup=${updateHandler(item, 'owner')}/></td>
     </tr>
   `
-}
 
-function formatDate (date) {
-  return moment(date).format('YYYY.MM.DD')
+  function formatDate (date) {
+    return moment(date).format('YYYY.MM.DD')
+  }
+
+  function updateHandler (item, attr) {
+    return (e) => {
+      var update = {}
+      update[attr] = e.target.value
+      items.update(extend(item, update))
+      console.log(items)
+      render()
+    }
+  }
 }
 
 function render () {
