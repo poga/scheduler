@@ -9,17 +9,20 @@ var container = document.getElementById('vis')
 
 const today = moment().startOf('day')
 
+const GROUP_STEP_ID = 1
+const GROUP_ITEM_ID = 2
+
 const groups = [
-  { id: 1, content: 'step' },
-  { id: 2, content: 'item' }
+  { id: GROUP_STEP_ID, content: 'step' },
+  { id: GROUP_ITEM_ID, content: 'item' }
 ]
 
 const stepStyle = 'background-color: grey; border: none; color: white'
 
 // Create a DataSet (allows two way data-binding)
 var items = new vis.DataSet([
-  { id: 1, group: 2, content: 'item 1', start: today.clone(), end: today.clone().add(1, 'day'), owner: 'foo' },
-  { id: 2, group: 1, content: 'Step 1', start: today.clone().add(1, 'day'), style: stepStyle }
+  { id: 1, group: GROUP_ITEM_ID, content: 'item 1', start: today.clone(), end: today.clone().add(1, 'day'), owner: 'foo' },
+  { id: 2, group: GROUP_STEP_ID, content: 'Step 1', start: today.clone().add(1, 'day'), style: stepStyle }
 ])
 window.items = items
 
@@ -45,7 +48,7 @@ var options = {
   zoomKey: 'ctrlKey',
   start: today.clone().startOf('week'),
   onAdd: (item, cb) => {
-    if (item.group === 1) {
+    if (item.group === GROUP_STEP_ID) {
       item.content = '新階段'
       item.style = stepStyle
     } else {
@@ -122,7 +125,7 @@ const tbody = (items) => {
 
   var views = []
   items.forEach((item, i) => {
-    if (item.group === 1) {
+    if (item.group === GROUP_STEP_ID) {
       if (styleRendered) {
         currentStyle = (currentStyle + 1) % styles.length
         styleRendered = false
