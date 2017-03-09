@@ -2,7 +2,6 @@
 const vis = require('vis')
 const moment = require('moment')
 const yo = require('yo-yo')
-const extend = require('xtend')
 
 // DOM element where the Timeline will be attached
 var container = document.getElementById('vis')
@@ -159,9 +158,8 @@ const itemView = (item, i, style) => {
 
   function updateHandler (item, attr) {
     return (e) => {
-      var update = {}
-      update[attr] = e.target.value
-      items.update(extend(item, update))
+      item[attr] = e.target.value
+      items.update(item)
       render()
     }
   }
