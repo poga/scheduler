@@ -1,4 +1,4 @@
-/* globals prompt */
+/* globals prompt, localStorage */
 const vis = require('vis')
 const moment = require('moment')
 const yo = require('yo-yo')
@@ -19,10 +19,7 @@ const groups = [
 const stepStyle = 'background-color: grey; border: none; color: white'
 
 // Create a DataSet (allows two way data-binding)
-var items = new vis.DataSet([
-  { id: 1, group: GROUP_ITEM_ID, content: 'item 1', start: today.clone(), end: today.clone().add(1, 'day'), owner: 'foo' },
-  { id: 2, group: GROUP_STEP_ID, content: 'Step 1', start: today.clone().add(1, 'day'), style: stepStyle }
-])
+var items = loadItems()
 window.items = items
 
 // Configuration for the Timeline
@@ -167,6 +164,28 @@ const itemView = (item, i, style) => {
 
 function render () {
   yo.update(document.querySelector('#table'), tableView())
+  saveItems()
 }
 
 render()
+
+function loadItems () {
+  var data = localStorage.getItem('data')
+  var items
+  if (!data) {
+    items = new vis.DataSet(
+      [
+        { id: 1, group: GROUP_ITEM_ID, content: 'item 1', start: today.clone(), end: today.clone().add(1, 'day'), owner: 'foo' },
+        { id: 2, group: GROUP_STEP_ID, content: 'Step 1', start: today.clone().add(1, 'day'), style: stepStyle }
+      ]
+   )
+  } else {
+    items = new vis.DataSet(JSON.parse(data))
+  }
+
+  return items
+}
+
+function saveItems () {
+  localStorage.setItem('data', JSON.stringify(items.get()))
+}
